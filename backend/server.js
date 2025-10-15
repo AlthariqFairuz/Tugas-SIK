@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 const patientRoutes = require('./routes/patientRoutes');
 
 // Load environment variables
@@ -14,7 +16,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'FHIR API Documentation'
+}));
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: API information
+ *     description: Returns basic information about the FHIR API
+ *     tags: [FHIR]
+ *     responses:
+ *       200:
+ *         description: API information
+ */
 app.get('/', (req, res) => {
   res.json({
     message: 'FHIR Patient Management API',
@@ -22,12 +40,27 @@ app.get('/', (req, res) => {
     fhirVersion: '4.0.1',
     endpoints: {
       metadata: '/metadata',
-      patients: '/Patient'
+      patients: '/Patient',
+      documentation: '/api-docs'
     }
   });
 });
 
-// FHIR metadata endpoint 
+/**
+ * @swagger
+ * /metadata:
+ *   get:
+ *     summary: FHIR CapabilityStatement
+ *     description: Returns the server's FHIR capability statement
+ *     tags: [FHIR]
+ *     responses:
+ *       200:
+ *         description: FHIR CapabilityStatement
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CapabilityStatement'
+ */
 app.get('/metadata', (req, res) => {
   res.json({
     resourceType: 'CapabilityStatement',
