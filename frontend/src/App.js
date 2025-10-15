@@ -17,8 +17,11 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('/api/patients');
-      setPatients(response.data);
+      const response = await axios.get('/Patient');
+      // Extract patients from FHIR Bundle
+      const bundle = response.data;
+      const patients = bundle.entry ? bundle.entry.map(entry => entry.resource) : [];
+      setPatients(patients);
     } catch (err) {
       setError('Failed to fetch patients: ' + err.message);
       console.error('Error fetching patients:', err);
@@ -34,7 +37,7 @@ function App() {
   // Create patient
   const handleCreate = async (patientData) => {
     try {
-      await axios.post('/api/patients', patientData);
+      await axios.post('/Patient', patientData);
       fetchPatients();
       return true;
     } catch (err) {
@@ -47,7 +50,7 @@ function App() {
   // Update patient
   const handleUpdate = async (id, patientData) => {
     try {
-      await axios.put(`/api/patients/${id}`, patientData);
+      await axios.put(`/Patient/${id}`, patientData);
       setEditingPatient(null);
       fetchPatients();
       return true;
@@ -60,10 +63,13 @@ function App() {
 
   // Open delete modal
   const handleDeleteClick = (patient) => {
+    const name = patient.name?.[0] || {};
+    const givenName = name.given?.[0] || '';
+    const familyName = name.family || '';
     setDeleteModal({
       isOpen: true,
       patientId: patient.id,
-      patientName: `${patient.given_name} ${patient.family_name}`
+      patientName: `${givenName} ${familyName}`
     });
   };
 
@@ -75,7 +81,7 @@ function App() {
   // Confirm delete patient
   const handleConfirmDelete = async () => {
     try {
-      await axios.delete(`/api/patients/${deleteModal.patientId}`);
+      await axios.delete(`/Patient/${deleteModal.patientId}`);
       fetchPatients();
       handleCloseModal();
     } catch (err) {

@@ -19,13 +19,40 @@ app.get('/', (req, res) => {
   res.json({
     message: 'FHIR Patient Management API',
     version: '1.0.0',
+    fhirVersion: '4.0.1',
     endpoints: {
-      patients: '/api/patients'
+      metadata: '/metadata',
+      patients: '/Patient'
     }
   });
 });
 
-app.use('/api/patients', patientRoutes);
+// FHIR metadata endpoint 
+app.get('/metadata', (req, res) => {
+  res.json({
+    resourceType: 'CapabilityStatement',
+    status: 'active',
+    date: new Date().toISOString(),
+    kind: 'instance',
+    fhirVersion: '4.0.1',
+    format: ['json'],
+    rest: [{
+      mode: 'server',
+      resource: [{
+        type: 'Patient',
+        interaction: [
+          { code: 'read' },
+          { code: 'create' },
+          { code: 'update' },
+          { code: 'delete' },
+          { code: 'search-type' }
+        ]
+      }]
+    }]
+  });
+});
+
+app.use('/Patient', patientRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

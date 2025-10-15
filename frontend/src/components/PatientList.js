@@ -12,6 +12,26 @@ function PatientList({ patients, onEdit, onDelete, loading }) {
     });
   };
 
+  // Extract data from FHIR Patient resource
+  const getPatientData = (patient) => {
+    const name = patient.name?.[0] || {};
+    const telecom = patient.telecom || [];
+    const address = patient.address?.[0] || {};
+
+    return {
+      givenName: name.given?.[0] || '',
+      familyName: name.family || '',
+      gender: patient.gender || 'unknown',
+      birthDate: patient.birthDate || '',
+      phone: telecom.find(t => t.system === 'phone')?.value || '',
+      email: telecom.find(t => t.system === 'email')?.value || '',
+      addressLine: address.line?.[0] || '',
+      city: address.city || '',
+      postalCode: address.postalCode || '',
+      country: address.country || ''
+    };
+  };
+
   if (loading) {
     return (
       <div className="patient-list-container">
@@ -31,64 +51,67 @@ function PatientList({ patients, onEdit, onDelete, loading }) {
         </div>
       ) : (
         <div className="patient-grid">
-          {patients.map((patient) => (
-            <div key={patient.id} className="patient-card">
-              <div className="patient-header">
-                <h3>{patient.given_name} {patient.family_name}</h3>
-                <span className={`gender-badge ${patient.gender}`}>
-                  {patient.gender}
-                </span>
-              </div>
-
-              <div className="patient-details">
-                <div className="detail-row">
-                  <span className="label">Birth Date:</span>
-                  <span className="value">{formatDate(patient.birth_date)}</span>
+          {patients.map((patient) => {
+            const data = getPatientData(patient);
+            return (
+              <div key={patient.id} className="patient-card">
+                <div className="patient-header">
+                  <h3>{data.givenName} {data.familyName}</h3>
+                  <span className={`gender-badge ${data.gender}`}>
+                    {data.gender}
+                  </span>
                 </div>
 
-                {patient.phone && (
+                <div className="patient-details">
                   <div className="detail-row">
-                    <span className="label">Phone:</span>
-                    <span className="value">{patient.phone}</span>
+                    <span className="label">Birth Date:</span>
+                    <span className="value">{formatDate(data.birthDate)}</span>
                   </div>
-                )}
 
-                {patient.email && (
-                  <div className="detail-row">
-                    <span className="label">Email:</span>
-                    <span className="value">{patient.email}</span>
-                  </div>
-                )}
+                  {data.phone && (
+                    <div className="detail-row">
+                      <span className="label">Phone:</span>
+                      <span className="value">{data.phone}</span>
+                    </div>
+                  )}
 
-                {patient.address && (
-                  <div className="detail-row">
-                    <span className="label">Address:</span>
-                    <span className="value">
-                      {patient.address}
-                      {patient.city && `, ${patient.city}`}
-                      {patient.postal_code && ` ${patient.postal_code}`}
-                      {patient.country && `, ${patient.country}`}
-                    </span>
-                  </div>
-                )}
+                  {data.email && (
+                    <div className="detail-row">
+                      <span className="label">Email:</span>
+                      <span className="value">{data.email}</span>
+                    </div>
+                  )}
+
+                  {data.addressLine && (
+                    <div className="detail-row">
+                      <span className="label">Address:</span>
+                      <span className="value">
+                        {data.addressLine}
+                        {data.city && `, ${data.city}`}
+                        {data.postalCode && ` ${data.postalCode}`}
+                        {data.country && `, ${data.country}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="patient-actions">
+                  <button
+                    className="btn-edit"
+                    onClick={() => onEdit(patient)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn-delete"
+                    onClick={() => onDelete(patient)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-
-              <div className="patient-actions">
-                <button
-                  className="btn-edit"
-                  onClick={() => onEdit(patient)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn-delete"
-                  onClick={() => onDelete(patient)}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

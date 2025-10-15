@@ -17,24 +17,29 @@ function PatientForm({ onSubmit, editingPatient, onCancel }) {
 
   useEffect(() => {
     if (editingPatient) {
+      // Extract data from FHIR Patient resource
+      const name = editingPatient.name?.[0] || {};
+      const telecom = editingPatient.telecom || [];
+      const address = editingPatient.address?.[0] || {};
+
       // Format birth_date to YYYY-MM-DD for input[type="date"]
       let formattedBirthDate = '';
-      if (editingPatient.birth_date) {
-        const date = new Date(editingPatient.birth_date);
+      if (editingPatient.birthDate) {
+        const date = new Date(editingPatient.birthDate);
         formattedBirthDate = date.toISOString().split('T')[0];
       }
 
       setFormData({
-        family_name: editingPatient.family_name || '',
-        given_name: editingPatient.given_name || '',
+        family_name: name.family || '',
+        given_name: name.given?.[0] || '',
         gender: editingPatient.gender || '',
         birth_date: formattedBirthDate,
-        phone: editingPatient.phone || '',
-        email: editingPatient.email || '',
-        address: editingPatient.address || '',
-        city: editingPatient.city || '',
-        postal_code: editingPatient.postal_code || '',
-        country: editingPatient.country || ''
+        phone: telecom.find(t => t.system === 'phone')?.value || '',
+        email: telecom.find(t => t.system === 'email')?.value || '',
+        address: address.line?.[0] || '',
+        city: address.city || '',
+        postal_code: address.postalCode || '',
+        country: address.country || ''
       });
     } else {
       resetForm();
@@ -65,9 +70,45 @@ function PatientForm({ onSubmit, editingPatient, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Convert form data to FHIR Patient resource
+    const fhirPatient = {
+      resourceType: 'Patient',
+      name: [{
+        use: 'official',
+        family: formData.family_name,
+        given: [formData.given_name]
+      }],
+      gender: formData.gender,
+      birthDate: formData.birth_date
+    };
+
+    // Add telecom if phone or email exists
+    const telecom = [];
+    if (formData.phone) {
+      telecom.push({ system: 'phone', value: formData.phone });
+    }
+    if (formData.email) {
+      telecom.push({ system: 'email', value: formData.email });
+    }
+    if (telecom.length > 0) {
+      fhirPatient.telecom = telecom;
+    }
+
+    // Add address if any address fields exist
+    if (formData.address || formData.city || formData.postal_code || formData.country) {
+      fhirPatient.address = [{
+        use: 'home',
+        line: formData.address ? [formData.address] : undefined,
+        city: formData.city || undefined,
+        postalCode: formData.postal_code || undefined,
+        country: formData.country || undefined
+      }];
+    }
+
     const success = editingPatient
-      ? await onSubmit(editingPatient.id, formData)
-      : await onSubmit(formData);
+      ? await onSubmit(editingPatient.id, fhirPatient)
+      : await onSubmit(fhirPatient);
 
     if (success) {
       resetForm();
