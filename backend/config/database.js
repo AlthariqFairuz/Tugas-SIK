@@ -12,7 +12,7 @@ const pool = new Pool({
 
 // Test database connection
 pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
+  console.log('Connected to PostgreSQL dawtabase');
 });
 
 pool.on('error', (err) => {

@@ -46,21 +46,7 @@ app.get('/', (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /metadata:
- *   get:
- *     summary: FHIR CapabilityStatement
- *     description: Returns the server's FHIR capability statement
- *     tags: [FHIR]
- *     responses:
- *       200:
- *         description: FHIR CapabilityStatement
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CapabilityStatement'
- */
+// FHIR metadata endpoint 
 app.get('/metadata', (req, res) => {
   res.json({
     resourceType: 'CapabilityStatement',

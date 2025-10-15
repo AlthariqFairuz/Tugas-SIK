@@ -10,9 +10,11 @@ Aplikasi simulasi FHIR (Fast Healthcare Interoperability Resources) untuk manaje
 - Node.js + Express.js
 - PostgreSQL
 - pg (PostgreSQL client)
+- Swagger UI (API Documentation)
+- CORS (Cross-Origin Resource Sharing)
 
 ### Frontend
-- React
+- React (v18.2.0)
 - Axios (HTTP client)
 - CSS3
 
@@ -107,9 +109,49 @@ npm run dev
 
 Frontend akan otomatis terbuka di browser: **http://localhost:3000**
 
-## Fitur Aplikasi
+### 7. Testing API
 
-### CRUD Operations:
+Anda bisa testing API dengan beberapa cara:
+
+#### A. Menggunakan Swagger UI (Recommended)
+1. Buka browser dan kunjungi **http://localhost:3001/api-docs**
+2. Pilih endpoint yang ingin ditest
+3. Klik "Try it out"
+4. Isi parameter atau request body
+5. Klik "Execute" untuk menjalankan request
+6. Lihat response langsung di browser
+
+#### B. Menggunakan curl atau Postman
+```bash
+# Get all patients
+curl http://localhost:3001/Patient
+
+# Get patient by ID
+curl http://localhost:3001/Patient/1
+
+# Create new patient
+curl -X POST http://localhost:3001/Patient \
+  -H "Content-Type: application/json" \
+  -d '{"resourceType":"Patient","name":[{"family":"Doe","given":["Jane"]}],"gender":"female","birthDate":"1990-01-01"}'
+```
+
+#### C. Menggunakan Frontend UI
+- Akses http://localhost:3000 untuk menggunakan interface user-friendly
+
+## Fitur Utama
+
+### 1. FHIR Compliance
+- API mengikuti standar FHIR R4 (Fast Healthcare Interoperability Resources)
+- Endpoint `/metadata` menyediakan CapabilityStatement
+- Resource type `Patient` dengan format JSON sesuai spesifikasi FHIR
+- Support untuk operasi CRUD lengkap pada resource Patient
+
+### 2. Interactive API Documentation
+- Swagger UI tersedia di `/api-docs`
+- Testing endpoint langsung dari browser
+- Schema validation dan contoh request/response
+
+### 3. CRUD Operations:
 
 1. **CREATE** - Tambah pasien baru
    - Isi form dengan data pasien (nama, gender, tanggal lahir, dll)
@@ -138,30 +180,66 @@ Frontend akan otomatis terbuka di browser: **http://localhost:3000**
 
 Base URL: `http://localhost:3001`
 
+### Endpoint Utama
+
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| GET | `/api/patients` | Ambil semua data pasien |
-| GET | `/api/patients/:id` | Ambil data pasien berdasarkan ID |
-| POST | `/api/patients` | Buat data pasien baru |
-| PUT | `/api/patients/:id` | Update data pasien |
-| DELETE | `/api/patients/:id` | Hapus data pasien |
+| GET | `/` | Informasi API dan daftar endpoint |
+| GET | `/metadata` | FHIR CapabilityStatement |
+| GET | `/api-docs` | Swagger UI Documentation |
 
-### Contoh Request Body (POST/PUT):
+### FHIR Patient Resource
+
+Sesuai dengan standar FHIR, semua endpoint pasien menggunakan `/Patient`:
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/Patient` | Ambil semua data pasien |
+| GET | `/Patient/:id` | Ambil data pasien berdasarkan ID |
+| POST | `/Patient` | Buat data pasien baru |
+| PUT | `/Patient/:id` | Update data pasien |
+| DELETE | `/Patient/:id` | Hapus data pasien |
+
+### Contoh FHIR Patient Resource (Request Body)
+
+**Format FHIR Standard** (POST/PUT `/Patient`):
 
 ```json
 {
-  "family_name": "Smith",
-  "given_name": "John",
+  "resourceType": "Patient",
+  "name": [
+    {
+      "use": "official",
+      "family": "Smith",
+      "given": ["John"]
+    }
+  ],
   "gender": "male",
-  "birth_date": "1985-06-15",
-  "phone": "+1-555-0101",
-  "email": "john.smith@email.com",
-  "address": "123 Main St",
-  "city": "New York",
-  "postal_code": "10001",
-  "country": "USA"
+  "birthDate": "1985-06-15",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "+1-555-0101",
+      "use": "mobile"
+    },
+    {
+      "system": "email",
+      "value": "john.smith@email.com"
+    }
+  ],
+  "address": [
+    {
+      "use": "home",
+      "line": ["123 Main St"],
+      "city": "New York",
+      "postalCode": "10001",
+      "country": "USA"
+    }
+  ]
 }
 ```
+
+**Catatan**: API mendukung format FHIR standar sesuai spesifikasi FHIR R4.
 
 ## Database Schema
 
@@ -180,6 +258,39 @@ Tabel `patients` dengan field:
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
 
+## Struktur Proyek
+
+```
+Tugas-SIK/
+├── backend/
+│   ├── config/
+│   │   ├── database.js      # Konfigurasi PostgreSQL
+│   │   └── swagger.js        # Konfigurasi Swagger
+│   ├── controllers/
+│   │   └── patientController.js
+│   ├── routes/
+│   │   └── patientRoutes.js
+│   ├── scripts/
+│   │   ├── generate.js       # Script generate database
+│   │   ├── migrate.js        # Script migrasi schema
+│   │   └── seed.js           # Script seed data
+│   ├── utils/
+│   │   └── fhirConverter.js  # Converter FHIR format
+│   ├── server.js             # Entry point server
+│   ├── package.json
+│   └── .env                  # Environment variables
+│
+├── frontend/
+│   ├── src/
+│   │   ├── App.js           # Main React component
+│   │   ├── App.css          # Styling
+│   │   └── index.js
+│   ├── public/
+│   └── package.json
+│
+└── README.md
+```
+
 ## Anggota Kelompok
 
 | NIM | Nama |
@@ -191,3 +302,4 @@ Tabel `patients` dengan field:
 ---
 
 **EB4007 Sistem Informasi Kesehatan**
+**Institut Teknologi Bandung**
